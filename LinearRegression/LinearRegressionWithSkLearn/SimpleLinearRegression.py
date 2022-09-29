@@ -12,7 +12,7 @@ def readData(folder , filename):
 def findModel(X, y):
     regressor = LinearRegression()
     regressor.fit(X, y)
-    return regressor.coef_[0], regressor.intercept_
+    return  regressor.intercept_, regressor.coef_[0]
 
 def visualizeModel(X, y, w):
     plt.scatter(X[:, -1], y, color = "red")
