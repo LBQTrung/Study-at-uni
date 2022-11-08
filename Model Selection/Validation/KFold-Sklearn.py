@@ -4,6 +4,7 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.model_selection import train_test_split
 from sklearn.model_selection import KFold
 from sklearn.metrics import mean_squared_error
+from sklearn.linear_model import LinearRegression
 
 def readData(folder , filename):
     data = np.loadtxt(os.path.join(folder, filename), delimiter = ',')
@@ -12,29 +13,6 @@ def readData(folder , filename):
     one = np.ones((X.shape[0], 1))
     X = np.concatenate((one, X), axis = 1)
     return X, y
-
-def predict(X, w):
-    return np.dot(X, w)
-
-def calculateLoss(X, y, w):
-    h = np.dot(X, w)
-    m = X.shape[0]
-    J = (1/ (2*m)) * np.sum(np.square(h-y))
-    return J
-
-def gradient(X, y, w):
-    m = X.shape[0]
-    h = np.dot(X, w)
-    return (1/m) * np.dot(X.T, h - y)
-
-def gradientDescent(X, y, w_init, alpha, n = 1500):
-    w_optimal = w_init.reshape(-1, 1)
-    loss_values = []
-    for i in range(n):
-        w_optimal = w_optimal - alpha * gradient(X, y, w_optimal)
-        j = calculateLoss(X, y, w_optimal)
-        loss_values.append(j)
-    return w_optimal, loss_values
 
 def featureScalingSplit(X, y):
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=15)
@@ -48,26 +26,25 @@ def featureScalingSplit(X, y):
 
 def kFoldCrossValiation(X_train, y_train):
     kf = KFold(n_splits=10)
-    w_init = np.zeros((X_train.shape[1], 1))
     step = 0
     valitdate_models = {}
     for train2_index, val_index in kf.split(X = X_train,y = y_train):
         step = step + 1
+        regressor = LinearRegression()
         print('\tBước lặp huấn luyện thứ: ', step)
         X_train2, X_val = X_train[train2_index], X_train[val_index]
         y_train2, y_val = y_train[train2_index], y_train[val_index]
-        w_opt, J_history = gradientDescent(X=X_train2,y=y_train2, 
-                                           w_init=w_init, alpha=0.01, n=1500)
+        regressor.fit(X_train2, y_train2)
         print('\t\tĐánh giá mô hình trên tập dữ liệu validation')
-        y_pred = predict(X_val, w_opt)
+        y_pred = regressor.predict(X_val)
         print('\t\t\tMSE: ', mean_squared_error(y_val, y_pred))
-        valitdate_models[mean_squared_error(y_val, y_pred)] = w_opt 
+        valitdate_models[mean_squared_error(y_val, y_pred)] =  regressor
     min_error = min(list(valitdate_models.keys()))
     return valitdate_models[min_error]
 
-def validateTestSet(X_test, y_test, w_opt):
+def validateTestSet(X_test, y_test, regressor):
     print("\nĐánh giá hiệu năng mô hình trên tập dữ liệu test:")
-    y_pred = predict(X_test, w_opt)
+    y_pred = regressor.predict(X_test)
     print("\tMSE: ", mean_squared_error(y_test, y_pred))
     return mean_squared_error(y_test, y_pred)
         
@@ -75,8 +52,8 @@ def main():
     FOLDER = r'D:\Học Kì 1 - Năm 2\Học máy 1\Baitap\Model Selection\Validation'
     X, y = readData(FOLDER, 'ex1data1.txt')
     X_train, X_test, y_train, y_test = featureScalingSplit(X, y)
-    w_optimal = kFoldCrossValiation(X_train, y_train)
-    validateTestSet(X_test, y_test, w_optimal)
+    regressor = kFoldCrossValiation(X_train, y_train)
+    validateTestSet(X_test, y_test, regressor)
     
 if __name__ == "__main__":
     main()
