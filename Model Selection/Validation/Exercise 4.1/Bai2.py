@@ -10,6 +10,7 @@ def readData(folder , filename):
     one = np.ones((X.shape[0], 1))
     X = np.concatenate((one, X), axis = 1)
     return X, y
+    
 def normScaling(X, y):
   for col in range(1, X.shape[1]):
     temp = X[:, col]

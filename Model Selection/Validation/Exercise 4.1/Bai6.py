@@ -2,9 +2,9 @@ import os
 import numpy as np
 from sklearn.preprocessing import StandardScaler
 from sklearn.model_selection import train_test_split
-from sklearn.model_selection import cross_validate, cross_val_predict
-from sklearn.linear_model import LinearRegression
+from sklearn.model_selection import KFold
 from sklearn.metrics import mean_squared_error
+from sklearn.linear_model import LinearRegression
 
 def readData(folder , filename):
     data = np.loadtxt(os.path.join(folder, filename), delimiter = ',')
@@ -24,20 +24,33 @@ def featureScalingSplit(X, y):
     y_test = sc_y.transform(y_test)
     return X_train, X_test, y_train, y_test
 
-def kFoldCrossValiation(X_train, y_train, k):
-    pass
+def kFoldCrossValiation(X_train, y_train):
+    kf = KFold(n_splits=10)
+    step = 0
+    valitdate_models = {}
+    for train2_index, val_index in kf.split(X = X_train,y = y_train):
+        step = step + 1
+        regressor = LinearRegression()
+        X_train2, X_val = X_train[train2_index], X_train[val_index]
+        y_train2, y_val = y_train[train2_index], y_train[val_index]
+        regressor.fit(X_train2, y_train2)
+        y_pred = regressor.predict(X_val)
+        valitdate_models[mean_squared_error(y_val, y_pred)] =  regressor
+    min_error = min(list(valitdate_models.keys()))
+    return valitdate_models[min_error]
+
+def validateTestSet(X_test, y_test, regressor):
+    print("Đánh giá hiệu năng mô hình trên tập dữ liệu test:")
+    y_pred = regressor.predict(X_test)
+    print("\tMSE: ", mean_squared_error(y_test, y_pred))
+    return mean_squared_error(y_test, y_pred)
         
 def main():
-    FOLDER = r'D:\Học Kì 1 - Năm 2\Học máy 1\Baitap\Model Selection\Validation'
+    FOLDER = r'D:\Học Kì 1 - Năm 2\Học máy 1\Baitap\Model Selection\Validation\Exercise 4.1'
     X, y = readData(FOLDER, 'ex1data1.txt')
     X_train, X_test, y_train, y_test = featureScalingSplit(X, y)
-    regressor = LinearRegression()
-    scores = cross_validate(regressor, X_train, y_train, cv=10,
-                        scoring='neg_mean_squared_error',
-                        return_train_score=True)
-    print(scores['test_score'])
+    regressor = kFoldCrossValiation(X_train, y_train)
+    validateTestSet(X_test, y_test, regressor)
     
-    y_pred = cross_val_predict(regressor, X_test, y_test, cv=10)
-    print(mean_squared_error(y_test, y_pred))
 if __name__ == "__main__":
     main()
