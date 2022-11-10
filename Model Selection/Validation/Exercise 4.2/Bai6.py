@@ -31,8 +31,8 @@ def kFoldCrossValiation(X_train, y_train):
         classifier.fit(X_train2, y_train2)
         y_pred = classifier.predict(X_val)
         valitdate_models[accuracy_score(y_val, y_pred)] =  classifier
-    min_error = min(list(valitdate_models.keys()))
-    return valitdate_models[min_error]
+    max_accuracy = max(list(valitdate_models.keys()))
+    return valitdate_models[max_accuracy]
 
 def validateTestSet(X_test, y_test, classifier):
     print("Đánh giá hiệu năng mô hình trên tập dữ liệu test:")
